@@ -1,0 +1,21 @@
+{
+  "name": "Alex",
+  "age": 25,
+  "sex": "male",
+  "height_cm": 170.0,
+  "weight_kg": 70.0,
+  "fitness_level": "intermediate",
+  "goal": "endurance",
+  "injuries": "",
+  "coaching_tone": "encouraging",
+  "anthropic_key": "AIzaSyDFe983_C32G-RRHwjYJqWKteAVQtz5PH0",
+  "gemini_key": "AIzaSyAAgAW60PFMGQ7xR_jvOxaCGvr3tQzfWHs",
+  "is_onboarded": true,
+  "sessions_done": 6,
+  "total_reps_ever": 19,
+  "best_form_scores": {
+    "squat": 81.2,
+    "curl": 77.7
+  },
+  "last_session": 1777359475.9085078
+}
