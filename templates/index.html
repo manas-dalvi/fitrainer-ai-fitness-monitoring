@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fitrainer — AI Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#080c14;--bg2:#0f1520;--bg3:#161e2e;--bg4:#1c2638;
+  --border:rgba(56,189,248,.1);--border2:rgba(56,189,248,.25);
+  --cyan:#38bdf8;--cyan2:#0ea5e9;--violet:#a78bfa;
+  --green:#34d399;--amber:#fbbf24;--red:#f87171;
+  --t1:#f0f4f8;--t2:#94a3b8;--t3:#475569;
+  --font-d:'Orbitron',monospace;
+  --font-b:'Exo 2',system-ui,sans-serif;
+  --font-m:'Share Tech Mono',monospace;
+  --r:8px;--r2:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--t1);font-family:var(--font-b);font-size:14px;overflow:hidden}
+body{
+  display:flex;flex-direction:column;
+  background-image:linear-gradient(rgba(56,189,248,.015) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(56,189,248,.015) 1px,transparent 1px);
+  background-size:44px 44px;
+}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* ── TOPBAR ── */
+#topbar{
+  height:48px;flex-shrink:0;
+  background:rgba(8,12,20,.95);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 14px;gap:12px;
+  backdrop-filter:blur(8px);z-index:20;
+}
+#logo{font-family:var(--font-d);font-size:15px;font-weight:700;color:var(--cyan);
+  letter-spacing:3px;text-shadow:0 0 14px rgba(56,189,248,.5);display:flex;align-items:center;gap:8px}
+#logo-icon{width:26px;height:26px;border-radius:6px;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  display:flex;align-items:center;justify-content:center;font-size:13px}
+.top-pill{display:flex;align-items:center;gap:5px;padding:3px 9px;
+  border:1px solid var(--border);border-radius:20px;
+  font-family:var(--font-m);font-size:10.5px;color:var(--t2)}
+.top-pill .v{color:var(--cyan);font-size:12px}
+.top-pill.xp .v{color:var(--amber)}
+.top-pill.lvl .v{color:var(--violet)}
+.top-pill.streak .v{color:var(--green)}
+#cv-pill{font-size:10px;padding:3px 9px;border-radius:20px;border:1px solid;
+  display:flex;align-items:center;gap:4px}
+#cv-pill.ok{color:var(--green);border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.07)}
+#cv-pill.off{color:var(--t3);border-color:var(--border)}
+#cv-pill::before{content:'●';font-size:8px}
+
+/* ── MAIN GRID ── */
+#main{flex:1;display:grid;grid-template-columns:210px 1fr 210px;overflow:hidden}
+
+/* ── PANELS ── */
+.panel{background:rgba(15,21,32,.8);border-right:1px solid var(--border);
+  overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column}
+#right-panel{border-right:none;border-left:1px solid var(--border)}
+.panel-hdr{font-family:var(--font-d);font-size:7.5px;letter-spacing:2.5px;
+  color:var(--t3);padding:10px 12px 6px;border-bottom:1px solid var(--border);
+  flex-shrink:0;text-transform:uppercase}
+
+/* ── AGENT CARDS ── */
+.agent-card{margin:5px 8px;padding:9px 10px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+  transition:border-color .3s,box-shadow .3s,background .3s;flex-shrink:0}
+.agent-card.active{border-color:rgba(167,139,250,.6);
+  background:linear-gradient(135deg,var(--bg3),rgba(167,139,250,.07));
+  box-shadow:0 0 12px rgba(167,139,250,.18)}
+.agent-card.alert{border-color:rgba(248,113,113,.7);
+  background:linear-gradient(135deg,var(--bg3),rgba(248,113,113,.07));
+  box-shadow:0 0 14px rgba(248,113,113,.22);
+  animation:card-pulse .5s ease 3}
+.agent-hdr{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.a-icon{width:22px;height:22px;border-radius:5px;display:flex;align-items:center;
+  justify-content:center;font-size:11px;flex-shrink:0}
+.a-name{font-family:var(--font-d);font-size:7.5px;font-weight:600;
+  letter-spacing:1px;color:var(--t1);flex:1}
+.a-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);
+  flex-shrink:0;transition:all .3s}
+.a-dot.on{background:var(--violet);box-shadow:0 0 5px var(--violet);animation:dot-pulse 1.4s infinite}
+.a-dot.warn{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+.a-dot.crit{background:var(--red);box-shadow:0 0 5px var(--red);animation:dot-pulse .7s infinite}
+.agent-msg{font-size:10.5px;color:var(--t2);line-height:1.45;min-height:20px;
+  border-left:2px solid transparent;padding-left:5px}
+.agent-msg.cv{border-color:var(--cyan);color:#7dd3fc}
+.agent-msg.coach{border-color:var(--violet);color:#c4b5fd}
+.agent-msg.safety{border-color:var(--red);color:#fca5a5}
+.agent-msg.fatigue{border-color:var(--amber);color:#fde68a}
+.agent-msg.progress{border-color:var(--green);color:#6ee7b7}
+
+/* ── CENTER ── */
+#center{display:flex;flex-direction:column;background:var(--bg);overflow:hidden}
+#hud{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+#ex-display{font-family:var(--font-d);font-size:12px;font-weight:700;
+  color:var(--cyan);letter-spacing:2px;text-shadow:0 0 8px rgba(56,189,248,.4)}
+#set-info{font-family:var(--font-m);font-size:10.5px;color:var(--t2)}
+#set-info span{color:var(--t1);font-size:13px}
+#phase-badge{font-family:var(--font-d);font-size:8px;letter-spacing:1.5px;
+  padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--t2);transition:all .3s}
+#phase-badge.active{border-color:var(--cyan);color:var(--cyan);background:rgba(56,189,248,.08)}
+#phase-badge.rest{border-color:var(--violet);color:var(--violet);background:rgba(167,139,250,.08)}
+
+/* ── CAMERA ── */
+#cam-wrap{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+#video-feed{width:100%;height:100%;object-fit:cover}
+#no-cam{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:10px;background:rgba(8,12,20,.9)}
+#no-cam.hidden{display:none}
+#no-cam p{font-size:12px;color:var(--t2);text-align:center;max-width:240px;line-height:1.6}
+
+/* Feedback banner */
+#feedback{position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  z-index:10;padding:7px 16px;border-radius:var(--r);border:1px solid;
+  font-size:11.5px;font-weight:500;max-width:320px;text-align:center;
+  pointer-events:none;opacity:0;transition:opacity .3s;line-height:1.4}
+#feedback.show{opacity:1}
+#feedback.cv{border-color:var(--cyan);background:rgba(56,189,248,.1);color:#7dd3fc}
+#feedback.safety{border-color:var(--red);background:rgba(248,113,113,.12);color:#fca5a5}
+#feedback.coach{border-color:var(--violet);background:rgba(167,139,250,.1);color:#c4b5fd}
+#feedback.progress{border-color:var(--green);background:rgba(52,211,153,.09);color:#6ee7b7}
+#feedback.fatigue{border-color:var(--amber);background:rgba(251,191,36,.1);color:#fde68a}
+
+/* Rep counter overlay */
+#rep-wrap{position:absolute;bottom:16px;left:18px;z-index:5;display:flex;align-items:flex-end;gap:10px}
+#rep-big{font-family:var(--font-d);font-size:52px;font-weight:900;color:#fff;
+  text-shadow:0 0 20px rgba(56,189,248,.6);line-height:1}
+#rep-label{font-family:var(--font-m);font-size:11px;color:var(--t2);margin-bottom:10px;letter-spacing:1px}
+
+/* Coach HUD overlay — persistent, bottom-right of camera */
+#coach-hud{position:absolute;bottom:16px;right:16px;z-index:6;max-width:220px;
+  background:rgba(8,12,20,.82);border:1px solid rgba(167,139,250,.45);
+  border-radius:var(--r2);padding:9px 13px;backdrop-filter:blur(6px);
+  pointer-events:none;display:none;}
+#coach-hud.visible{display:block;animation:msg-in .35s ease}
+#coach-hud-lbl{font-family:var(--font-d);font-size:7px;letter-spacing:2px;
+  color:var(--violet);opacity:.8;margin-bottom:4px}
+#coach-hud-msg{font-size:11px;color:#c4b5fd;line-height:1.5}
+
+/* Form bar */
+#form-bar-wrap{padding:7px 14px 8px;border-top:1px solid var(--border);flex-shrink:0}
+.form-row{display:flex;justify-content:space-between;font-family:var(--font-m);
+  font-size:10px;color:var(--t3);margin-bottom:4px}
+.form-row .fval{font-size:12px;color:var(--green);transition:color .3s}
+#form-track{height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+#form-fill{height:100%;border-radius:3px;background:var(--green);
+  transition:width .4s ease,background .4s;width:0%}
+
+/* Controls */
+#controls{padding:7px 12px;border-top:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;background:rgba(8,12,20,.85);flex-shrink:0;flex-wrap:wrap}
+.btn{font-family:var(--font-d);font-size:9px;letter-spacing:.8px;
+  padding:5px 11px;border-radius:var(--r);border:1px solid var(--border);
+  background:transparent;color:var(--t2);cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn:hover{border-color:var(--border2);color:var(--t1);background:rgba(255,255,255,.04)}
+.btn.primary{border-color:var(--cyan);color:var(--cyan);background:rgba(56,189,248,.08)}
+.btn.primary:hover{background:rgba(56,189,248,.18);box-shadow:0 0 10px rgba(56,189,248,.2)}
+.btn.success{border-color:var(--green);color:var(--green);background:rgba(52,211,153,.08)}
+.btn.danger:hover{border-color:var(--red);color:var(--red);background:rgba(248,113,113,.08)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+#ex-select{font-family:var(--font-m);font-size:10px;
+  background:var(--bg3);color:var(--t1);border:1px solid var(--border);
+  border-radius:var(--r);padding:4px 8px;cursor:pointer}
+#ex-select:focus{outline:none;border-color:var(--cyan)}
+#ex-select option{background:#1c2638}
+
+/* ── RIGHT DASHBOARD ── */
+#user-card{margin:7px 8px;padding:10px;
+  background:linear-gradient(135deg,var(--bg3),rgba(167,139,250,.06));
+  border:1px solid var(--border);border-radius:var(--r2)}
+#u-name{font-family:var(--font-d);font-size:10px;font-weight:600;color:var(--t1);letter-spacing:1px}
+#u-level{font-family:var(--font-m);font-size:9px;color:var(--violet);margin:2px 0 5px}
+#xp-track{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden}
+#xp-fill{height:100%;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .5s}
+#xp-lbl{font-family:var(--font-m);font-size:8.5px;color:var(--t3);text-align:right;margin-top:2px}
+
+.met-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:0 8px;margin:5px 0}
+.met{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);
+  padding:7px;text-align:center;transition:border-color .3s,box-shadow .3s}
+.met.warn{border-color:rgba(251,191,36,.5);box-shadow:0 0 6px rgba(251,191,36,.12)}
+.met.crit{border-color:rgba(248,113,113,.6);box-shadow:0 0 8px rgba(248,113,113,.15)}
+.met-lbl{font-family:var(--font-m);font-size:8px;letter-spacing:.8px;color:var(--t3)}
+.met-val{font-family:var(--font-d);font-size:16px;font-weight:700;line-height:1.1;transition:color .3s}
+.met-unit{font-family:var(--font-m);font-size:8px;color:var(--t3)}
+
+.sec-lbl{font-family:var(--font-d);font-size:7.5px;letter-spacing:2px;
+  color:var(--t3);padding:6px 8px 3px;text-transform:uppercase}
+.prog-row{display:flex;align-items:center;gap:6px;padding:3px 8px;font-size:10px}
+.prog-name{color:var(--t2);flex:1;font-family:var(--font-m);font-size:9px}
+.prog-bar{width:55px;height:3px;background:rgba(255,255,255,.05);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px;background:var(--cyan);transition:width .4s}
+.prog-val{font-family:var(--font-m);font-size:9px;color:var(--t2);min-width:24px;text-align:right}
+
+/* Badges */
+#badge-grid{display:flex;flex-wrap:wrap;gap:4px;padding:2px 8px 8px}
+.badge{display:flex;align-items:center;gap:3px;padding:2px 7px;border-radius:20px;
+  border:1px solid var(--border);font-size:10px;color:var(--t3);transition:all .3s}
+.badge.earned{border-color:rgba(251,191,36,.5);color:var(--amber);background:rgba(251,191,36,.06)}
+
+/* ── ONBOARDING MODAL ── */
+#ob-overlay{position:fixed;inset:0;z-index:200;background:rgba(4,6,12,.95);
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#ob-overlay.hidden{display:none}
+#ob-box{width:420px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:14px;padding:26px 26px 22px}
+.ob-title{font-family:var(--font-d);font-size:13px;font-weight:700;color:var(--cyan);
+  letter-spacing:2px;text-align:center;margin-bottom:5px;text-shadow:0 0 12px rgba(56,189,248,.4)}
+.ob-sub{font-size:12px;color:var(--t2);text-align:center;margin-bottom:18px;line-height:1.6}
+.ob-dots{display:flex;justify-content:center;gap:6px;margin-bottom:16px}
+.ob-dot{width:6px;height:6px;border-radius:50%;background:var(--t3);transition:background .3s}
+.ob-dot.active{background:var(--cyan)}
+.ob-step{display:none}.ob-step.show{display:block}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-grid.single{grid-template-columns:1fr}
+label{font-size:10px;color:var(--t3);letter-spacing:.5px;display:block;margin-bottom:3px;text-transform:uppercase}
+input,select,textarea{width:100%;padding:7px 10px;font-size:13px;
+  background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:var(--r);color:var(--t1);font-family:var(--font-b);transition:border-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--cyan)}
+select option{background:#1c2638}
+textarea{resize:none;font-size:12px;height:56px}
+.ob-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+.ob-btn{font-family:var(--font-d);font-size:9px;letter-spacing:1px;
+  padding:7px 18px;border-radius:var(--r);border:1px solid var(--cyan);
+  background:rgba(56,189,248,.1);color:var(--cyan);cursor:pointer;transition:all .18s}
+.ob-btn:hover{background:rgba(56,189,248,.2);box-shadow:0 0 10px rgba(56,189,248,.2)}
+.ob-btn.sec{border-color:var(--border);color:var(--t2);background:transparent}
+.ob-btn.sec:hover{background:rgba(255,255,255,.04)}
+
+/* ── SESSION SUMMARY ── */
+#summary-overlay{position:fixed;inset:0;z-index:150;background:rgba(4,6,12,.92);
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(5px)}
+#summary-overlay.hidden{display:none}
+#summary-box{width:440px;max-height:82vh;overflow-y:auto;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:14px;padding:22px}
+.sum-title{font-family:var(--font-d);font-size:13px;font-weight:700;
+  color:var(--cyan);letter-spacing:2px;text-align:center;margin-bottom:14px}
+.sum-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.sum-cell{background:var(--bg4);border:1px solid var(--border);border-radius:var(--r);
+  padding:8px;text-align:center}
+.sum-cell .v{font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--t1)}
+.sum-cell .l{font-family:var(--font-m);font-size:8.5px;color:var(--t3);margin-top:2px}
+.sum-sec{margin:10px 0}
+.sum-sec-lbl{font-size:10px;color:var(--t3);letter-spacing:1px;margin-bottom:5px;text-transform:uppercase}
+.sum-text{font-size:12.5px;color:var(--t2);line-height:1.65}
+.pb-badge{display:inline-block;padding:2px 9px;border-radius:20px;
+  border:1px solid var(--amber);color:var(--amber);font-family:var(--font-d);
+  font-size:9px;letter-spacing:1px;margin-bottom:8px}
+
+/* ── TOASTS ── */
+.toast{position:fixed;bottom:20px;right:220px;z-index:100;
+  display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--r2);
+  border:1px solid var(--amber);background:linear-gradient(135deg,var(--bg3),rgba(251,191,36,.1));
+  font-size:11px;color:var(--t1);animation:toast-in .35s ease,toast-out .35s 2.8s ease forwards;
+  box-shadow:0 4px 20px rgba(251,191,36,.15)}
+.toast-icon{font-size:16px}
+.toast-xp{font-family:var(--font-d);font-size:12px;color:var(--amber);font-weight:700}
+.xp-burst{position:fixed;pointer-events:none;z-index:100;
+  font-family:var(--font-d);font-size:14px;font-weight:700;color:var(--amber);
+  text-shadow:0 0 8px rgba(251,191,36,.6);animation:xp-float 1.1s ease forwards}
+.lvlup{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:200;
+  padding:10px 28px;border-radius:var(--r2);border:1px solid var(--cyan);
+  background:rgba(56,189,248,.12);font-family:var(--font-d);font-size:12px;color:var(--cyan);
+  letter-spacing:2px;animation:toast-in .3s ease,toast-out .35s 2.8s ease forwards}
+
+/* ── FLOATING CHATBOT POPUP ── */
+#fitbot-trigger{
+  position:fixed;bottom:24px;right:24px;z-index:180;
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  border:none;cursor:pointer;font-size:22px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(56,189,248,.35);
+  transition:transform .2s,box-shadow .2s;}
+#fitbot-trigger:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(56,189,248,.5)}
+#fitbot-trigger .badge-dot{
+  position:absolute;top:2px;right:2px;width:14px;height:14px;
+  border-radius:50%;background:var(--green);border:2px solid var(--bg);
+  font-size:7px;color:#000;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-weight:700;}
+
+#chatbot-popup{
+  position:fixed;bottom:88px;right:24px;z-index:180;
+  width:340px;height:480px;
+  background:var(--bg2);border:1px solid var(--border2);
+  border-radius:16px;display:flex;flex-direction:column;
+  box-shadow:0 8px 40px rgba(0,0,0,.6),0 0 0 1px rgba(56,189,248,.06);
+  transform:translateY(12px);opacity:0;pointer-events:none;
+  transition:transform .25s ease,opacity .25s ease;}
+#chatbot-popup.open{transform:translateY(0);opacity:1;pointer-events:all}
+
+#chatbot-popup-hdr{
+  padding:12px 14px 10px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:9px;flex-shrink:0;}
+#chatbot-popup-hdr .bot-avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+#chatbot-popup-hdr .bot-info{flex:1}
+#chatbot-popup-hdr .bot-name{
+  font-family:var(--font-d);font-size:10px;font-weight:600;
+  color:var(--t1);letter-spacing:1px}
+#chatbot-popup-hdr .bot-status{
+  font-family:var(--font-m);font-size:9px;color:var(--green);margin-top:1px}
+#chat-req-count{font-family:var(--font-m);font-size:9px;color:var(--t3);flex-shrink:0}
+#chat-req-count.warn{color:var(--amber)}
+#chat-req-count.limit{color:var(--red)}
+#chatbot-popup-close{
+  width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.05);
+  border:none;color:var(--t3);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+#chatbot-popup-close:hover{background:rgba(248,113,113,.15);color:var(--red)}
+
+#chat-messages{
+  flex:1;overflow-y:auto;padding:12px;display:flex;
+  flex-direction:column;gap:8px;}
+.chat-msg{max-width:88%;padding:8px 12px;border-radius:12px;
+  font-size:12px;line-height:1.55;word-break:break-word;}
+.chat-msg.user{
+  align-self:flex-end;border-bottom-right-radius:3px;
+  background:rgba(56,189,248,.14);border:1px solid rgba(56,189,248,.28);color:#93d4f8}
+.chat-msg.bot{
+  align-self:flex-start;border-bottom-left-radius:3px;
+  background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.28);color:#c4b5fd}
+.chat-msg.system{
+  align-self:center;font-size:10px;color:var(--t3);
+  font-style:italic;background:none;border:none;text-align:center}
+.chat-typing{align-self:flex-start;font-size:11px;color:var(--t3);font-style:italic;padding:4px 12px}
+
+#chat-input-row{
+  display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--border);flex-shrink:0;}
+#chat-input{
+  flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);
+  border-radius:20px;color:var(--t1);font-family:var(--font-b);
+  font-size:12px;padding:7px 14px;outline:none;}
+#chat-input:focus{border-color:var(--cyan)}
+#chat-send{
+  width:34px;height:34px;border-radius:50%;border:none;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  color:#fff;cursor:pointer;font-size:14px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,opacity .15s;}
+#chat-send:hover{transform:scale(1.08)}
+#chat-send:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* ── SETTINGS MODAL ── */
+#settings-overlay{position:fixed;inset:0;z-index:300;background:rgba(4,6,12,.95);
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#settings-overlay.hidden{display:none}
+#settings-box{width:400px;background:var(--bg3);border:1px solid var(--border2);
+  border-radius:14px;padding:26px}
+.set-title{font-family:var(--font-d);font-size:13px;font-weight:700;color:var(--cyan);
+  letter-spacing:2px;margin-bottom:6px;text-shadow:0 0 12px rgba(56,189,248,.4)}
+.set-sub{font-size:11.5px;color:var(--t2);margin-bottom:18px;line-height:1.6}
+#settings-confirm{font-size:11.5px;color:var(--green);margin-top:10px;min-height:18px;
+  transition:opacity .3s;font-family:var(--font-m)}
+#settings-confirm.hidden{opacity:0}
+.set-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}
+
+/* ── TOPBAR SETTINGS BTN ── */
+#btn-settings{margin-left:auto;font-family:var(--font-d);font-size:8.5px;letter-spacing:1px;
+  padding:4px 12px;border-radius:var(--r);border:1px solid var(--border);
+  background:transparent;color:var(--t2);cursor:pointer;transition:all .18s}
+#btn-settings:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(56,189,248,.08)}
+
+/* ── ANIMATIONS ── */
+@keyframes card-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+@keyframes dot-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes toast-in{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+@keyframes toast-out{to{opacity:0;transform:translateX(16px)}}
+@keyframes xp-float{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-46px) scale(1.2)}}
+@keyframes rep-pop{0%{transform:scale(1)}40%{transform:scale(1.3)}100%{transform:scale(1)}}
+@keyframes msg-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <div id="logo"><div id="logo-icon">⚡</div>FITRAINER</div>
+  <div class="top-pill"><span class="l">TIME</span>&nbsp;<span class="v" id="t-timer">00:00</span></div>
+  <div class="top-pill xp"><span class="l">XP</span>&nbsp;<span class="v" id="t-xp">0</span></div>
+  <div class="top-pill lvl"><span class="l">LVL</span>&nbsp;<span class="v" id="t-lvl">1</span></div>
+  <div class="top-pill streak"><span class="l">🔥</span>&nbsp;<span class="v" id="t-streak">0</span></div>
+  <div id="cv-pill" class="off">LOADING</div>
+  <button id="btn-settings">⚙ SETTINGS</button>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- LEFT: AGENTS -->
+  <div class="panel" id="left-panel">
+    <div class="panel-hdr">⬡ AI AGENTS</div>
+
+    <div class="agent-card" id="ac-cv">
+      <div class="agent-hdr">
+        <div class="a-icon" style="background:rgba(56,189,248,.15);color:var(--cyan)">👁</div>
+        <div class="a-name">CV AGENT</div>
+        <div class="a-dot" id="ad-cv"></div>
+      </div>
+      <div class="agent-msg cv" id="am-cv">Monitoring pose...</div>
+    </div>
+
+    <div class="agent-card" id="ac-coach">
+      <div class="agent-hdr">
+        <div class="a-icon" style="background:rgba(167,139,250,.15);color:var(--violet)">🧠</div>
+        <div class="a-name">COACH AGENT</div>
+        <div class="a-dot" id="ad-coach"></div>
+      </div>
+      <div class="agent-msg coach" id="am-coach">Press Start to begin.</div>
+    </div>
+
+    <div class="agent-card" id="ac-safety">
+      <div class="agent-hdr">
+        <div class="a-icon" style="background:rgba(248,113,113,.15);color:var(--red)">🛡</div>
+        <div class="a-name">SAFETY AGENT</div>
+        <div class="a-dot" id="ad-safety"></div>
+      </div>
+      <div class="agent-msg safety" id="am-safety">Nominal.</div>
+    </div>
+
+    <div class="agent-card" id="ac-fatigue">
+      <div class="agent-hdr">
+        <div class="a-icon" style="background:rgba(251,191,36,.15);color:var(--amber)">⚡</div>
+        <div class="a-name">FATIGUE AGENT</div>
+        <div class="a-dot" id="ad-fatigue"></div>
+      </div>
+      <div class="agent-msg fatigue" id="am-fatigue">Monitoring energy...</div>
+    </div>
+
+    <div class="agent-card" id="ac-progress">
+      <div class="agent-hdr">
+        <div class="a-icon" style="background:rgba(52,211,153,.15);color:var(--green)">📈</div>
+        <div class="a-name">PROGRESS AGENT</div>
+        <div class="a-dot" id="ad-progress"></div>
+      </div>
+      <div class="agent-msg progress" id="am-progress">Session tracking ready.</div>
+    </div>
+
+    <!-- Exercise guide -->
+    <div style="margin:6px 8px;padding:9px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r)">
+      <div style="font-family:var(--font-d);font-size:7px;letter-spacing:2px;color:var(--t3);margin-bottom:5px">FORM GUIDE</div>
+      <div id="form-guide" style="font-size:10.5px;color:var(--t2);line-height:1.6">
+        Select an exercise and start your session.
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: CAMERA -->
+  <div id="center">
+    <div id="hud">
+      <div id="ex-display">SELECT EXERCISE</div>
+      <div id="set-info">SET <span id="s-set">—</span>&nbsp; REP <span id="s-rep">0</span></div>
+      <div id="phase-badge">STANDBY</div>
+    </div>
+
+    <div id="cam-wrap">
+      <img id="video-feed" src="/video" alt="camera feed">
+      <div id="no-cam">
+        <div style="font-size:36px;opacity:.3">📷</div>
+        <p>Press <strong>START SESSION</strong> to activate your camera and begin real-time AI coaching.</p>
+        <p style="font-size:11px;color:var(--t3)">Position 1.5–2m away. Full body in frame. Good lighting helps.</p>
+      </div>
+      <div id="feedback"></div>
+      <div id="rep-wrap">
+        <div id="rep-big">0</div>
+        <div id="rep-label">REPS</div>
+      </div>
+      <div id="coach-hud">
+        <div id="coach-hud-lbl">🧠 COACH</div>
+        <div id="coach-hud-msg"></div>
+      </div>
+    </div>
+
+    <div id="form-bar-wrap">
+      <div class="form-row">
+        <span style="letter-spacing:.8px">FORM SCORE</span>
+        <span class="fval" id="form-val">—</span>
+      </div>
+      <div id="form-track"><div id="form-fill"></div></div>
+    </div>
+
+    <div id="controls">
+      <button class="btn primary" id="btn-start">▶ START SESSION</button>
+      <select id="ex-select">
+        <option value="squat">Squat</option>
+        <option value="pushup">Push-Up</option>
+        <option value="curl">Bicep Curl</option>
+        <option value="press">Shoulder Press</option>
+        <option value="lunge">Lunge</option>
+        <option value="plank">Plank</option>
+      </select>
+      <button class="btn success" id="btn-endset" disabled>✓ END SET</button>
+      <button class="btn danger" id="btn-endsession" disabled>■ END SESSION</button>
+      <label style="display:flex;align-items:center;gap:5px;font-family:var(--font-m);font-size:10px;color:var(--t3);cursor:pointer;margin-left:4px">
+        <input type="checkbox" id="cv-toggle" checked style="accent-color:var(--cyan)"> CV OVERLAY
+      </label>
+    </div>
+  </div>
+
+  <!-- RIGHT: DASHBOARD -->
+  <div class="panel" id="right-panel">
+    <div class="panel-hdr">◈ DASHBOARD</div>
+
+    <div id="user-card">
+      <div id="u-name">ATHLETE</div>
+      <div id="u-level">LEVEL <span id="d-lvl">1</span> · <span id="d-title" style="color:var(--t2)">Rookie</span></div>
+      <div id="xp-track"><div id="xp-fill" style="width:0%"></div></div>
+      <div id="xp-lbl"><span id="xp-cur">0</span> / <span id="xp-nxt">150</span> XP</div>
+    </div>
+
+    <div class="met-grid">
+      <div class="met" id="m-form-card">
+        <div class="met-lbl">FORM</div>
+        <div class="met-val" id="m-form" style="color:var(--green)">—</div>
+        <div class="met-unit">SCORE</div>
+      </div>
+      <div class="met" id="m-cal-card">
+        <div class="met-lbl">KCAL</div>
+        <div class="met-val" id="m-cal" style="color:var(--violet)">0</div>
+        <div class="met-unit">BURNED</div>
+      </div>
+    </div>
+
+    <div class="sec-lbl">SESSION</div>
+    <div class="prog-row">
+      <span class="prog-name">AVG SCORE</span>
+      <div class="prog-bar"><div class="prog-fill" id="pb-avg"></div></div>
+      <span class="prog-val" id="pv-avg">—</span>
+    </div>
+    <div class="prog-row">
+      <span class="prog-name">BEST</span>
+      <div class="prog-bar"><div class="prog-fill" id="pb-best" style="background:var(--amber)"></div></div>
+      <span class="prog-val" id="pv-best">—</span>
+    </div>
+    <div class="prog-row">
+      <span class="prog-name">CONSISTENCY</span>
+      <div class="prog-bar"><div class="prog-fill" id="pb-cons" style="background:var(--violet)"></div></div>
+      <span class="prog-val" id="pv-cons">—</span>
+    </div>
+
+    <div class="sec-lbl">BADGES</div>
+    <div id="badge-grid"></div>
+  </div>
+</div>
+
+<!-- ONBOARDING -->
+<div id="ob-overlay">
+  <div id="ob-box">
+    <div class="ob-title">WELCOME TO FITRAINER</div>
+    <div class="ob-sub">Quick setup — personalise your AI coaching in 3 steps.</div>
+    <div class="ob-dots">
+      <div class="ob-dot active" id="od1"></div>
+      <div class="ob-dot" id="od2"></div>
+      <div class="ob-dot" id="od3"></div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="ob-step show" id="os1">
+      <div class="form-grid">
+        <div><label>First Name</label><input id="ob-name" placeholder="Alex" maxlength="30"></div>
+        <div><label>Age</label><input id="ob-age" type="number" placeholder="25" min="13" max="90"></div>
+      </div>
+      <div class="form-grid">
+        <div><label>Sex</label>
+          <select id="ob-sex"><option value="male">Male</option><option value="female">Female</option></select>
+        </div>
+        <div><label>Height (cm)</label><input id="ob-height" type="number" placeholder="170"></div>
+      </div>
+      <div class="form-grid">
+        <div><label>Weight (kg)</label><input id="ob-weight" type="number" placeholder="70"></div>
+        <div><label>Primary Goal</label>
+          <select id="ob-goal">
+            <option value="build_muscle">Build Muscle</option>
+            <option value="lose_weight">Lose Weight</option>
+            <option value="endurance">Endurance</option>
+            <option value="rehab">Rehabilitation</option>
+          </select>
+        </div>
+      </div>
+      <div class="ob-btns"><button class="ob-btn" id="ob-next1">NEXT →</button></div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="ob-step" id="os2">
+      <div class="form-grid">
+        <div><label>Fitness Level</label>
+          <select id="ob-level">
+            <option value="beginner">Beginner</option>
+            <option value="intermediate" selected>Intermediate</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </div>
+        <div><label>Coaching Tone</label>
+          <select id="ob-tone">
+            <option value="encouraging">Encouraging 💪</option>
+            <option value="strict">Strict / Direct</option>
+            <option value="scientific">Scientific</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid single">
+        <div><label>Injuries / Conditions (optional)</label>
+          <textarea id="ob-injuries" placeholder="e.g. lower back pain, left knee..."></textarea>
+        </div>
+      </div>
+      <div class="ob-btns">
+        <button class="ob-btn sec" id="ob-back2">← BACK</button>
+        <button class="ob-btn" id="ob-next2">NEXT →</button>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="ob-step" id="os3">
+      <div style="font-size:11.5px;color:var(--t2);line-height:1.65;margin-bottom:14px">
+        Fitrainer uses <strong style="color:var(--cyan)">Claude AI</strong> for personalised coaching.
+        Enter your Anthropic API key below — or skip for local-only mode (all CV features still work).
+        <br><br>
+        📷 <strong style="color:var(--t1)">Camera tip:</strong> Stand 1.5–2m away. Full body visible. Face a light source.
+      </div>
+      <div class="form-grid single">
+        <div><label>Anthropic API Key (optional — free at console.anthropic.com)</label>
+          <input id="ob-key" placeholder="sk-ant-..." style="font-family:monospace;font-size:11px">
+        </div>
+      </div>
+      <div class="ob-btns">
+        <button class="ob-btn sec" id="ob-back3">← BACK</button>
+        <button class="ob-btn" id="ob-finish">⚡ START FITRAINER</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SESSION SUMMARY -->
+<div id="summary-overlay" class="hidden">
+  <div id="summary-box">
+    <div class="sum-title">SESSION COMPLETE</div>
+    <div id="sum-pb" class="pb-badge" style="display:none;text-align:center">🏆 PERSONAL BEST</div>
+    <div class="sum-grid">
+      <div class="sum-cell"><div class="v" id="su-reps">0</div><div class="l">TOTAL REPS</div></div>
+      <div class="sum-cell"><div class="v" id="su-avg">0</div><div class="l">AVG FORM</div></div>
+      <div class="sum-cell"><div class="v" id="su-best">0</div><div class="l">BEST REP</div></div>
+    </div>
+    <div class="sum-grid">
+      <div class="sum-cell"><div class="v" id="su-cal">0</div><div class="l">KCAL</div></div>
+      <div class="sum-cell"><div class="v" id="su-xp">0</div><div class="l">XP EARNED</div></div>
+      <div class="sum-cell"><div class="v" id="su-lvl">1</div><div class="l">LEVEL</div></div>
+    </div>
+    <div class="sum-sec">
+      <div class="sum-sec-lbl">📈 Coaching Insight</div>
+      <div class="sum-text" id="su-summary">Loading...</div>
+    </div>
+    <div style="text-align:center;margin-top:14px">
+      <button class="ob-btn" id="su-close">DONE</button>
+    </div>
+  </div>
+</div>
+
+<!-- FITBOT FLOATING POPUP -->
+<button id="fitbot-trigger" title="Ask FitBot">
+  🤖
+  <span class="badge-dot" id="fitbot-dot">10</span>
+</button>
+
+<div id="chatbot-popup">
+  <div id="chatbot-popup-hdr">
+    <div class="bot-avatar">🤖</div>
+    <div class="bot-info">
+      <div class="bot-name">FITBOT</div>
+      <div class="bot-status">● Online · Gemini 2.0 Flash Lite</div>
+    </div>
+    <span id="chat-req-count">10 left</span>
+    <button id="chatbot-popup-close" title="Close">✕</button>
+  </div>
+  <div id="chat-messages">
+    <div class="chat-msg system">Hi! Ask me anything about fitness — up to 10 questions.</div>
+  </div>
+  <div id="chat-input-row">
+    <input id="chat-input" placeholder="Ask a fitness question..." maxlength="200">
+    <button id="chat-send">↑</button>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-overlay" class="hidden">
+  <div id="settings-box">
+    <div class="set-title">⚙ SETTINGS</div>
+    <div class="set-sub">Paste your Gemini API key below. Get one free at <strong style="color:var(--cyan)">aistudio.google.com</strong>.</div>
+    <div>
+      <label>Gemini API Key</label>
+      <input id="set-gemini-key" placeholder="AIza..." style="font-family:monospace;font-size:11px">
+    </div>
+    <div id="settings-confirm" class="hidden">✓ API key successfully updated</div>
+    <div class="set-btns">
+      <button class="ob-btn sec" id="set-cancel">CANCEL</button>
+      <button class="ob-btn" id="set-save">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  sessionActive: false,
+  sessionStart:  null,
+  timerInterval: null,
+  xp: 0, level: 1, streak: 0,
+  lastRepCount: 0,
+  lastCoachMsg: "",
+  badgesLoaded: false,
+};
+
+const XP_THRESH = [0,150,400,800,1400,2200,3200,4500];
+const LVL_NAMES = ["Rookie","Trainee","Active","Committed","Intermediate","Advanced","Expert","Elite"];
+const FORM_GUIDES = {
+  squat:  "Hip-width stance. Chest up, knees track over toes. Descend until thighs are parallel.",
+  pushup: "Hands shoulder-width. Body in a straight plank line. Elbows at 45° from body.",
+  curl:   "Elbows pinned to sides. Full extension at bottom. Squeeze at top.",
+  press:  "Start at shoulder height. Press overhead to full lockout. Core braced.",
+  lunge:  "Step forward, both knees at 90°. Front knee over ankle, torso upright.",
+  plank:  "Forearms on floor. Straight line head to heel. Breathe steadily and hold.",
+};
+
+// ── SSE ───────────────────────────────────────────────────────────────────────
+const evtSrc = new EventSource("/events");
+evtSrc.onmessage = (e) => {
+  try { handleState(JSON.parse(e.data)); } catch(_) {}
+};
+
+function handleState(d) {
+  // CV pill
+  const cvPill = $("cv-pill");
+  cvPill.className = "cv-pill " + (d.pose_detected ? "ok" : "off");
+  cvPill.textContent = d.pose_detected ? "CV LIVE" : "NO POSE";
+
+  // HUD
+  $("s-set").textContent = d.set_num ?? "—";
+  $("s-rep").textContent = d.rep_count ?? 0;
+
+  // Phase badge
+  const pb = $("phase-badge");
+  if (!S.sessionActive) {
+    pb.className = "phase-badge"; pb.textContent = "STANDBY";
+  } else {
+    const p = d.phase || "waiting";
+    pb.className = "phase-badge" + (p !== "waiting" ? " active" : "");
+    pb.textContent = p.toUpperCase();
+  }
+
+  // Rep counter
+  const newRep = d.rep_count || 0;
+  if (newRep !== S.lastRepCount && newRep > 0) {
+    S.lastRepCount = newRep;
+    const el = $("rep-big");
+    el.style.animation = "none";
+    void el.offsetWidth;
+    el.style.animation = "rep-pop .35s ease";
+    onRepCompleted(d);
+  }
+  $("rep-big").textContent = newRep;
+
+  // Form bar
+  const score = d.form_score || 0;
+  const fill = $("form-fill");
+  const fval = $("form-val");
+  fill.style.width = score + "%";
+  const fc = score >= 80 ? "var(--green)" : score >= 55 ? "var(--amber)" : "var(--red)";
+  fill.style.background = fc;
+  fval.textContent = Math.round(score);
+  fval.style.color = fc;
+
+  // Dashboard metrics
+  const avg = d.avg_score || 0;
+  const best = d.best_score || 0;
+  const cons = d.consistency || 0;
+  $("m-form").textContent = avg || "—";
+  $("m-form").style.color = avg >= 80 ? "var(--green)" : avg >= 55 ? "var(--amber)" : "var(--red)";
+  $("pb-avg").style.width = avg + "%";
+  $("pv-avg").textContent = avg || "—";
+  $("pb-best").style.width = best + "%";
+  $("pv-best").textContent = best || "—";
+  $("pb-cons").style.width = cons + "%";
+  $("pv-cons").textContent = (cons > 0 ? cons + "%" : "—");
+
+  // Calories (rough estimate from session time)
+  $("m-cal").textContent = Math.round(d.calories_estimate || 0);
+
+  // Gamification
+  updateXP(d.xp || 0, d.level || 1, d.level_name || "Rookie");
+  $("t-streak").textContent = d.streak || 0;
+  S.streak = d.streak || 0;
+
+  // Agent panel updates
+  updateAgent("cv",      d.active_errors?.length ? d.active_errors[0]?.message : "Form looks good.", d.active_errors?.length ? (d.active_errors[0]?.severity === "critical" ? "crit" : "warn") : "");
+  updateAgent("coach",   d.coach_msg, d.coach_msg !== S.lastCoachMsg ? "on" : "");
+  if (d.coach_msg !== S.lastCoachMsg) {
+    S.lastCoachMsg = d.coach_msg;
+    showFeedback(d.coach_msg, "coach");
+    // Persistent HUD overlay on camera
+    const hudEl  = $("coach-hud");
+    const hudMsg = $("coach-hud-msg");
+    if (hudEl && hudMsg && d.coach_msg && !d.coach_msg.includes("Press Start")) {
+      hudMsg.textContent = d.coach_msg;
+      hudEl.classList.add("visible");
+      // Re-trigger animation
+      hudMsg.style.animation = "none"; void hudMsg.offsetWidth;
+      hudMsg.style.animation = "msg-in .35s ease";
+    }
+  }
+
+  if (d.safety_critical?.length) {
+    updateAgent("safety", d.safety_critical[0], "crit");
+    showFeedback(d.safety_critical[0], "safety");
+  } else if (d.safety_warnings?.length) {
+    updateAgent("safety", d.safety_warnings[0], "warn");
+  } else {
+    updateAgent("safety", "Nominal.", "");
+  }
+
+  updateAgent("fatigue",  d.fatigue_msg || "Energy levels normal.", d.fatigue_level === "high" ? "crit" : d.fatigue_level === "medium" ? "warn" : "");
+  updateAgent("progress", d.progress_msg || "Session tracking ready.", d.progress_trend === "improving" ? "on" : "");
+
+  // New badge toast
+  if (d.new_badge) {
+    showBadgeToast(d.new_badge);
+    const chip = document.getElementById("badge-" + d.new_badge.id);
+    if (chip) chip.classList.add("earned");
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function updateAgent(name, msg, dotState) {
+  const msgEl = $("am-" + name);
+  const dotEl = $("ad-" + name);
+  const cardEl = $("ac-" + name);
+  // Only animate + update text when message actually changes (prevents flicker)
+  if (msgEl && msg && msgEl.textContent !== msg) {
+    msgEl.textContent = msg;
+    msgEl.style.animation = "none"; void msgEl.offsetWidth;
+    msgEl.style.animation = "msg-in .3s ease";
+  }
+  const newDotClass = "a-dot" + (dotState ? " " + dotState : "");
+  if (dotEl && dotEl.className !== newDotClass) dotEl.className = newDotClass;
+  if (cardEl) {
+    cardEl.classList.toggle("active", dotState === "on");
+    cardEl.classList.toggle("alert", dotState === "crit");
+  }
+}
+
+let feedbackTimer = null;
+function showFeedback(msg, type) {
+  const el = $("feedback");
+  el.textContent = msg;
+  el.className = "feedback show " + (type || "cv");
+  clearTimeout(feedbackTimer);
+  feedbackTimer = setTimeout(() => el.classList.remove("show"), 4000);
+}
+
+function updateXP(xp, level, levelName) {
+  S.xp = xp; S.level = level;
+  $("t-xp").textContent = xp;
+  $("t-lvl").textContent = level;
+  $("d-lvl").textContent = level;
+  $("d-title").textContent = levelName;
+  $("xp-cur").textContent = xp;
+  const cur = XP_THRESH[Math.min(level-1, XP_THRESH.length-1)];
+  const nxt = XP_THRESH[Math.min(level,   XP_THRESH.length-1)];
+  $("xp-nxt").textContent = nxt;
+  const pct = nxt > cur ? Math.min(100, ((xp-cur)/(nxt-cur))*100) : 100;
+  $("xp-fill").style.width = pct + "%";
+}
+
+function onRepCompleted(d) {
+  // XP burst near rep counter
+  const rw = $("rep-wrap").getBoundingClientRect();
+  spawnXP("+XP", rw.right + 10, rw.top);
+}
+
+function spawnXP(text, x, y) {
+  const el = document.createElement("div");
+  el.className = "xp-burst";
+  el.textContent = text;
+  el.style.left = x + "px"; el.style.top = y + "px";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+function showBadgeToast(badge) {
+  const toast = document.createElement("div");
+  toast.className = "toast";
+  toast.innerHTML = `<span class="toast-icon">${badge.icon}</span>
+    <span><strong>${badge.name}</strong><br><span style="font-size:10px;color:var(--t2)">Badge earned!</span></span>
+    <span class="toast-xp">+XP</span>`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3400);
+}
+
+// ── Session controls ──────────────────────────────────────────────────────────
+async function startSession() {
+  const ex = $("ex-select").value;
+  const res = await fetch("/api/session/start", {
+    method: "POST", headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({exercise: ex})
+  });
+  const data = await res.json();
+  if (!data.ok) { alert(data.error); return; }
+
+  S.sessionActive = true; S.sessionStart = Date.now(); S.lastRepCount = 0;
+  $("no-cam").classList.add("hidden");
+  $("ex-display").textContent = data.display;
+  $("form-guide").textContent = FORM_GUIDES[ex] || "";
+  $("btn-start").disabled = true;
+  $("btn-endset").disabled = false;
+  $("btn-endsession").disabled = false;
+  $("btn-start").textContent = "RUNNING";
+  $("phase-badge").className = "phase-badge active";
+  $("phase-badge").textContent = "TRAINING";
+  S.timerInterval = setInterval(updateTimer, 1000);
+  showFeedback(data.camera_tip, "progress");
+}
+
+async function endSet() {
+  const res = await fetch("/api/session/end_set", {method:"POST"});
+  const data = await res.json();
+  if (data.message) { showFeedback(data.message, "coach"); updateAgent("coach", data.message, "on"); }
+  $("phase-badge").className = "phase-badge rest";
+  $("phase-badge").textContent = "REST";
+  $("s-set").textContent = data.set_num;
+  spawnXP("+" + data.xp_gained + " XP", window.innerWidth/2, window.innerHeight/2);
+  setTimeout(() => {
+    $("phase-badge").className = "phase-badge active";
+    $("phase-badge").textContent = "TRAINING";
+  }, 3000);
+}
+
+async function endSession() {
+  if (!confirm("End this session?")) return;
+  clearInterval(S.timerInterval);
+  const res = await fetch("/api/session/end", {method:"POST"});
+  const data = await res.json();
+  S.sessionActive = false;
+  $("btn-start").disabled = false; $("btn-start").textContent = "▶ START SESSION";
+  $("btn-endset").disabled = true; $("btn-endsession").disabled = true;
+  $("phase-badge").className = "phase-badge"; $("phase-badge").textContent = "STANDBY";
+  showSummary(data);
+}
+
+function showSummary(data) {
+  $("su-reps").textContent = data.total_reps || 0;
+  $("su-avg").textContent  = data.avg_score  || 0;
+  $("su-best").textContent = data.best_score || 0;
+  $("su-cal").textContent  = data.calories   || 0;
+  $("su-xp").textContent   = data.xp_total   || 0;
+  $("su-lvl").textContent  = data.level      || 1;
+  $("su-summary").textContent = data.summary || "Great session!";
+  $("sum-pb").style.display = data.personal_best > 0 ? "block" : "none";
+  $("summary-overlay").classList.remove("hidden");
+}
+
+function updateTimer() {
+  if (!S.sessionStart) return;
+  const s = Math.floor((Date.now() - S.sessionStart) / 1000);
+  $("t-timer").textContent = String(Math.floor(s/60)).padStart(2,"0") + ":" + String(s%60).padStart(2,"0");
+  // Rough calorie estimate for display
+  const met = {"squat":5,"pushup":3.8,"curl":3,"press":3.5,"lunge":4.5,"plank":3};
+  const ex = $("ex-select").value;
+  const w = parseFloat(document.body.dataset.weight || "70");
+  const cal = (met[ex]||4) * w * (s/3600);
+  $("m-cal").textContent = Math.round(cal);
+}
+
+// ── Status + badges loader ────────────────────────────────────────────────────
+async function loadStatus() {
+  const res = await fetch("/api/status");
+  const d = await res.json();
+  const cvPill = $("cv-pill");
+  cvPill.className = "cv-pill " + (d.cv_ready ? "ok" : "off");
+  cvPill.textContent = d.cv_ready ? "CV READY" : "NO MODEL";
+  if (!d.is_onboarded) $("ob-overlay").classList.remove("hidden");
+  else $("ob-overlay").classList.add("hidden");
+}
+
+async function loadBadges() {
+  const res = await fetch("/api/badges");
+  const badges = await res.json();
+  const grid = $("badge-grid");
+  grid.innerHTML = "";
+  badges.forEach(b => {
+    const chip = document.createElement("div");
+    chip.className = "badge" + (b.earned ? " earned" : "");
+    chip.id = "badge-" + b.id;
+    chip.innerHTML = `<span>${b.icon}</span>${b.name}`;
+    chip.title = b.desc;
+    grid.appendChild(chip);
+  });
+}
+
+async function loadProfile() {
+  const res = await fetch("/api/profile");
+  const d = await res.json();
+  if (d.name && d.name !== "Athlete") {
+    $("u-name").textContent = d.name.toUpperCase();
+    document.body.dataset.weight = d.weight_kg || "70";
+  }
+}
+
+// ── Onboarding ────────────────────────────────────────────────────────────────
+let obStep = 1;
+function showStep(n) {
+  [1,2,3].forEach(i => {
+    $("os"+i).classList.toggle("show", i===n);
+    $("od"+i).classList.toggle("active", i<=n);
+  });
+  obStep = n;
+}
+$("ob-next1").addEventListener("click", () => showStep(2));
+$("ob-next2").addEventListener("click", () => showStep(3));
+$("ob-back2").addEventListener("click", () => showStep(1));
+$("ob-back3").addEventListener("click", () => showStep(2));
+
+$("ob-finish").addEventListener("click", async () => {
+  const profile = {
+    name:          $("ob-name").value || "Athlete",
+    age:           parseInt($("ob-age").value   || "25"),
+    height_cm:     parseFloat($("ob-height").value || "170"),
+    weight_kg:     parseFloat($("ob-weight").value || "70"),
+    sex:           $("ob-sex").value,
+    goal:          $("ob-goal").value,
+    fitness_level: $("ob-level").value,
+    coaching_tone: $("ob-tone").value,
+    injuries:      $("ob-injuries").value,
+    anthropic_key: $("ob-key").value.trim(),
+  };
+  await fetch("/api/profile", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify(profile)
+  });
+  document.body.dataset.weight = profile.weight_kg;
+  $("u-name").textContent = profile.name.toUpperCase();
+  $("ob-overlay").classList.add("hidden");
+  await loadStatus();
+});
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+$("btn-start").addEventListener("click", startSession);
+$("btn-endset").addEventListener("click", endSet);
+$("btn-endsession").addEventListener("click", endSession);
+$("su-close").addEventListener("click", () => {
+  $("summary-overlay").classList.add("hidden");
+  loadBadges();
+});
+
+$("ex-select").addEventListener("change", async function() {
+  if (S.sessionActive) {
+    const res = await fetch("/api/exercise", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({exercise: this.value})
+    });
+    const data = await res.json();
+    $("ex-display").textContent = data.display;
+    $("form-guide").textContent = data.description || "";
+    showFeedback(data.camera_tip, "progress");
+  } else {
+    $("form-guide").textContent = FORM_GUIDES[this.value] || "";
+  }
+});
+
+// ── Settings modal ────────────────────────────────────────────────────────────
+$("btn-settings").addEventListener("click", () => {
+  $("settings-confirm").classList.add("hidden");
+  $("settings-overlay").classList.remove("hidden");
+});
+$("set-cancel").addEventListener("click", () => {
+  $("settings-overlay").classList.add("hidden");
+});
+$("set-save").addEventListener("click", async () => {
+  const key = $("set-gemini-key").value.trim();
+  if (!key) return;
+  $("set-save").disabled = true;
+  $("set-save").textContent = "SAVING...";
+  try {
+    const res = await fetch("/api/settings", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({gemini_key: key})
+    });
+    const data = await res.json();
+    const confirmEl = $("settings-confirm");
+    confirmEl.textContent = data.message || "API key successfully updated";
+    confirmEl.classList.remove("hidden");
+    // Auto-close modal after 2 seconds
+    setTimeout(() => {
+      $("settings-overlay").classList.add("hidden");
+      confirmEl.classList.add("hidden");
+    }, 2000);
+  } finally {
+    $("set-save").disabled = false;
+    $("set-save").textContent = "SAVE";
+  }
+});
+
+// ── Chatbot popup ────────────────────────────────────────────────────────────────
+const chatState = { requests: 0, limitReached: false };
+
+function openChatPopup() {
+  $("chatbot-popup").classList.add("open");
+  $("chat-input").focus();
+}
+function closeChatPopup() {
+  $("chatbot-popup").classList.remove("open");
+}
+
+$("fitbot-trigger").addEventListener("click", () => {
+  $("chatbot-popup").classList.toggle("open");
+  if ($("chatbot-popup").classList.contains("open")) $("chat-input").focus();
+});
+$("chatbot-popup-close").addEventListener("click", closeChatPopup);
+
+function appendChatMsg(text, role) {
+  const msgs = $("chat-messages");
+  const div = document.createElement("div");
+  div.className = "chat-msg " + role;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function updateChatCounter(used, limitReached) {
+  chatState.requests = used;
+  chatState.limitReached = limitReached;
+  const remaining = 10 - used;
+  const el = $("chat-req-count");
+  el.textContent = remaining + " left";
+  el.className = limitReached ? "limit" : (used >= 7 ? "warn" : "");
+  $("fitbot-dot").textContent = remaining;
+  $("fitbot-dot").style.background = limitReached ? "var(--red)" : (used >= 7 ? "var(--amber)" : "var(--green)");
+  $("chat-send").disabled = limitReached;
+  $("chat-input").disabled = limitReached;
+  if (limitReached) $("chat-input").placeholder = "Limit reached (10/10)";
+}
+
+async function sendChatMessage() {
+  const input = $("chat-input");
+  const msg = input.value.trim();
+  if (!msg || chatState.limitReached) return;
+  input.value = "";
+  appendChatMsg(msg, "user");
+  const typing = document.createElement("div");
+  typing.className = "chat-typing";
+  typing.textContent = "FitBot is thinking...";
+  $("chat-messages").appendChild(typing);
+  $("chat-messages").scrollTop = $("chat-messages").scrollHeight;
+  $("chat-send").disabled = true;
+  try {
+    const res = await fetch("/api/chat", {
+      method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: msg})
+    });
+    const data = await res.json();
+    typing.remove();
+    appendChatMsg(data.reply, "bot");
+    updateChatCounter(data.requests_used, data.limit_reached);
+  } catch(e) {
+    typing.remove();
+    appendChatMsg("Connection error — please try again.", "bot");
+  } finally {
+    if (!chatState.limitReached) $("chat-send").disabled = false;
+  }
+}
+
+$("chat-send").addEventListener("click", sendChatMessage);
+$("chat-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", async () => {
+  await loadStatus();
+  await loadProfile();
+  await loadBadges();
+  $("form-guide").textContent = FORM_GUIDES["squat"];
+});
+</script>
+</body>
+</html>
