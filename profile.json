@@ -8,8 +8,8 @@
   "goal": "endurance",
   "injuries": "",
   "coaching_tone": "encouraging",
-  "anthropic_key": "AIzaSyDFe983_C32G-RRHwjYJqWKteAVQtz5PH0",
-  "gemini_key": "AIzaSyAAgAW60PFMGQ7xR_jvOxaCGvr3tQzfWHs",
+  "anthropic_key": "YOUR_ANTHROPIC_API_KEY"
+  "gemini_key": "YOUR_GEMINI_API_KEY"
   "is_onboarded": true,
   "sessions_done": 6,
   "total_reps_ever": 19,
